@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("D:/RFC_Try/build/esp-idf/newlib/port/cmake_install.cmake")
+  include("D:/RFC_BUILD/RFC_Try/build/esp-idf/newlib/port/cmake_install.cmake")
 endif()
 

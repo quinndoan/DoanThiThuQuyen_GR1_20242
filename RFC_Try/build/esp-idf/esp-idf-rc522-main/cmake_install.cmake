@@ -1,4 +1,4 @@
-# Install script for directory: D:/RFC_Try/esp-idf-rc522-main
+# Install script for directory: D:/RFC_BUILD/RFC_Try/esp-idf-rc522-main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

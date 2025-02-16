@@ -5,10 +5,10 @@
 #include "task_common.h"
 static const char *TAG = "rc522-basic-example";
 
-#define RC522_SPI_BUS_GPIO_MISO    (25)
-#define RC522_SPI_BUS_GPIO_MOSI    (23)
-#define RC522_SPI_BUS_GPIO_SCLK    (19)
-#define RC522_SPI_SCANNER_GPIO_SDA (22)
+#define RC522_SPI_BUS_GPIO_MISO    (19)
+#define RC522_SPI_BUS_GPIO_MOSI    (21)
+#define RC522_SPI_BUS_GPIO_SCLK    (22)
+#define RC522_SPI_SCANNER_GPIO_SDA (23)
 #define RC522_SCANNER_GPIO_RST     (-1) // soft-reset
 
 static rc522_spi_config_t driver_config = {
@@ -50,6 +50,6 @@ void app_main()
     };
 
     rc522_create(&scanner_config, &scanner);
-    rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL);
+    rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL); // handle variable, trigger, handle function, null
     rc522_start(scanner);
 }
