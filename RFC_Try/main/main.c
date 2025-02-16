@@ -3,7 +3,7 @@
 #include "driver/rc522_spi.h"
 #include "rc522_picc.h"
 #include "task_common.h"
-static const char *TAG = "rc522-basic-example";
+static const char *TAG = "rc522_reading_card";
 
 #define RC522_SPI_BUS_GPIO_MISO    (19)
 #define RC522_SPI_BUS_GPIO_MOSI    (21)
