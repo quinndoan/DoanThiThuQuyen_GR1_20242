@@ -1,5 +1,11 @@
-#include "FlashHandler.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
 #include "nvs.h"
+#include "nvs_flash.h"
+#include "FlashHandler.h"
+
 
 bool FlashHandler_getData(char *nameSpace, char *key, void *dataStore)
 {

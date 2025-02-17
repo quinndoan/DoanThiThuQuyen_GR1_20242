@@ -3,7 +3,11 @@
 #include "driver/rc522_spi.h"
 #include "rc522_picc.h"
 #include "task_common.h"
+#include "FlashHandler.h"
+#include <strings.h>
 static const char *TAG = "rc522_reading_card";
+
+static char uid_tem[20];
 
 #define RC522_SPI_BUS_GPIO_MISO    (19)
 #define RC522_SPI_BUS_GPIO_MOSI    (21)
@@ -34,6 +38,28 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
         rc522_picc_print(picc);
+
+        // Check if UID is already stored
+        rc522_picc_t stored_picc;
+
+        if (FlashHandler_getData(NAMESPACE_DEVICE_INFO, KEY_UID, &uid_tem) != ESP_OK) { // phai chay thu lai xem co dung logic khong, neu sai sua cho uid_tem phai khac DEFAULT
+        // UID not found, save the card info
+            bzero(g_uid, sizeof(g_uid));
+            bzero(g_type, sizeof(g_type));   
+            bzero(g_atqa, sizeof(g_atqa));
+            bzero(g_sak, sizeof(g_sak));
+
+            if (FlashHandler_setData(NAMESPACE_DEVICE_INFO, KEY_UID, &g_uid, sizeof(g_uid)) &&
+                FlashHandler_setData(NAMESPACE_DEVICE_INFO, KEY_TYPE, &g_type, sizeof(g_type)) &&
+                FlashHandler_setData(NAMESPACE_DEVICE_INFO, KEY_ATQA, &g_atqa, sizeof(g_atqa)) &&
+                FlashHandler_setData(NAMESPACE_DEVICE_INFO, KEY_SAK, &g_sak, sizeof(g_sak)))
+                {
+                ESP_LOGI(TAG, "Card info saved to flash");
+                }
+            }
+            else{
+                ESP_LOGI(TAG, "Error when saving info to flash or device already saved");
+            }
     }
     else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
         ESP_LOGI(TAG, "Card has been removed");
