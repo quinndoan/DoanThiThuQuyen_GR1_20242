@@ -1,10 +1,36 @@
 #include <esp_log.h>
-#include "rc522.h"
-#include "driver/rc522_spi.h"
+//#include "rc522.h"
+#include "rc522_driver.h" // Ensure this header is included
+#include "rc522_spi.h"
 #include "rc522_picc.h"
+#include "rc522_internal.h"
+#include "rc522_driver_internal.h"
+#include "rc522_types.h"
+#include "rc522_picc_internal.h"
+#include "rc522_picc.h"
+#include "rc522_types_internal.h"
+#include "rc522_types.h"
+#include "rc522_pcd.h"
+#include "rc522_pcd_internal.h"
+#include "rc522_helpers_internal.h"
+
 #include "task_common.h"
 #include "FlashHandler.h"
 #include <strings.h>
+
+esp_err_t rc522_create(const rc522_config_t *config, rc522_handle_t *out_rc522);
+
+esp_err_t rc522_register_events(
+    const rc522_handle_t rc522, rc522_event_t event, esp_event_handler_t event_handler, void *event_handler_arg);
+
+esp_err_t rc522_unregister_events(const rc522_handle_t rc522, rc522_event_t event, esp_event_handler_t event_handler);
+
+esp_err_t rc522_start(rc522_handle_t rc522);
+
+esp_err_t rc522_pause(rc522_handle_t rc522);
+
+esp_err_t rc522_destroy(rc522_handle_t rc522);
+
 static const char *TAG = "rc522_reading_card";
 
 static char uid_tem[20];

@@ -9,6 +9,7 @@
     "idf.flashType": "UART",
     "files.associations": {
         "*.embeddedhtml": "html",
-        "event_groups.h": "c"
+        "event_groups.h": "c",
+        "rc522_picc_internal.h": "c"
     }
 }

@@ -1,12 +1,8 @@
-#pragma once
+#ifndef RC522_H
+#define RC522_H
 
 #include "rc522_types.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-ESP_EVENT_DECLARE_BASE(RC522_EVENTS);
 
 esp_err_t rc522_create(const rc522_config_t *config, rc522_handle_t *out_rc522);
 
@@ -21,6 +17,5 @@ esp_err_t rc522_pause(rc522_handle_t rc522);
 
 esp_err_t rc522_destroy(rc522_handle_t rc522);
 
-#ifdef __cplusplus
-}
+
 #endif

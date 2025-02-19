@@ -1,11 +1,9 @@
-#pragma once
-
+#ifndef RC522_PICC_INTERNAL_H
+#define RC522_PICC_INTERNAL_H
 #include "rc522_pcd_internal.h"
 #include "rc522_picc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 /**
  * Commands sent to the PICC
@@ -99,6 +97,5 @@ rc522_picc_type_t rc522_picc_get_type(const rc522_picc_t *picc);
 esp_err_t rc522_picc_set_state(
     const rc522_handle_t rc522, rc522_picc_t *picc, rc522_picc_state_t new_state, bool fire_event);
 
-#ifdef __cplusplus
-}
+
 #endif

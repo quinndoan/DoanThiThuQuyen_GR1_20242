@@ -6,6 +6,8 @@
 #include "nvs_flash.h"
 #include "FlashHandler.h"
 
+#define log_info(format, ...)
+#define log_err(format, ...)
 
 bool FlashHandler_getData(char *nameSpace, char *key, void *dataStore)
 {

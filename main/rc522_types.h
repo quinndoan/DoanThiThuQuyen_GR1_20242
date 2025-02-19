@@ -1,15 +1,12 @@
-#pragma once
+#ifndef __RC522_TYPES_H__
+#define __RC522_TYPES_H__
 
 #include <esp_err.h>
 #include <esp_event.h>
 #include <inttypes.h>
 #include "freertos/FreeRTOS.h"
-#include "rc522_driver.h"
 #include "rc522_picc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define RC522_X "X"
 
@@ -30,7 +27,7 @@ extern "C" {
 #define RC522_ERR_HLTA_NOT_ACKED                (RC522_ERR_BASE + 14)
 
 typedef struct rc522 *rc522_handle_t;
-
+extern struct rc522_driver_handle *rc522_driver_handle_t;
 typedef struct
 {
     rc522_driver_handle_t driver;
@@ -47,6 +44,5 @@ typedef enum
     RC522_EVENT_PICC_STATE_CHANGED,
 } rc522_event_t;
 
-#ifdef __cplusplus
-}
+
 #endif
