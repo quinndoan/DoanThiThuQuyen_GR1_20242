@@ -1,4 +1,4 @@
-# Install script for directory: D:/RFC_BUILD/RFC_Try/main
+# Install script for directory: D:/RFC_BUILD/RFC_SPI/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

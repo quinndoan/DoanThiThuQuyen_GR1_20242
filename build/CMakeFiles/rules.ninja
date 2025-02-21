@@ -1780,7 +1780,7 @@ rule C_STATIC_LIBRARY_LINKER____idf_main_
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = C:\espressif\tools\cmake\3.24.0\bin\cmake.exe --regenerate-during-build -SD:\RFC_BUILD\RFC_Try -BD:\RFC_BUILD\RFC_Try\build
+  command = C:\espressif\tools\cmake\3.24.0\bin\cmake.exe --regenerate-during-build -SD:\RFC_BUILD\RFC_SPI -BD:\RFC_BUILD\RFC_SPI\build
   description = Re-running CMake...
   generator = 1
 
