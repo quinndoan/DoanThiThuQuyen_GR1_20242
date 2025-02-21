@@ -1,10 +1,11 @@
-#ifndef RC522_HELPERS_INTERNAL_H
-#define RC522_HELPERS_INTERNAL_H
+#pragma once
 
 #include <esp_err.h>
 #include <inttypes.h>
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 uint32_t rc522_millis();
 
@@ -15,5 +16,6 @@ esp_err_t rc522_buffer_to_hex_str(
 
 esp_err_t rc522_nibbles(uint8_t byte, uint8_t *msb, uint8_t *lsb);
 
-
+#ifdef __cplusplus
+}
 #endif

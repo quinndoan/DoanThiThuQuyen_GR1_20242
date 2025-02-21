@@ -1,9 +1,12 @@
-#ifndef RC522_I2C_H
-#define RC522_I2C_H
-#include "i2c.h"
-#include "driver/gpio.h"
+#pragma once
+
+#include <driver/i2c.h> // TODO: Migrate to new i2c API
+#include <driver/gpio.h>
 #include "rc522_driver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 {
@@ -21,5 +24,6 @@ typedef struct
 
 esp_err_t rc522_i2c_create(const rc522_i2c_config_t *config, rc522_driver_handle_t *driver);
 
-
+#ifdef __cplusplus
+}
 #endif

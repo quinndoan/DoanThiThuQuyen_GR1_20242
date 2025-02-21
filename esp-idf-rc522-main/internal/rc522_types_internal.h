@@ -1,5 +1,4 @@
-#ifndef RC522_TYPES_INTERNAL_H
-#define RC522_TYPES_INTERNAL_H
+#pragma once
 
 #include <esp_log.h>
 #include <esp_check.h>
@@ -84,5 +83,6 @@ typedef struct
     }                                                                                                                  \
     while (0)
 
-
+#ifdef __cplusplus
+}
 #endif

@@ -1,13 +1,12 @@
-#ifndef RC522_SPI_H
-#define RC522_SPI_H
+#pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "driver/spi_master.h"
-#include "driver/gpio.h"
+#include <driver/spi_master.h>
+#include <driver/gpio.h>
 #include "rc522_driver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RC522_SPI_WRITE (0)
 #define RC522_SPI_READ  (1)
@@ -28,5 +27,6 @@ typedef struct
 
 esp_err_t rc522_spi_create(const rc522_spi_config_t *config, rc522_driver_handle_t *driver);
 
-
+#ifdef __cplusplus
+}
 #endif

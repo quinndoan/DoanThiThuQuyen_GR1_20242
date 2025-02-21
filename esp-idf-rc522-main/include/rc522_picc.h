@@ -1,8 +1,10 @@
-#ifndef RC522_PICC_H
-#define RC522_PICC_H
+#pragma once
 
 #include "rc522_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RC522_PICC_UID_SIZE_MAX            (10)
 #define RC522_PICC_UID_SIZE_MIN            (4)
@@ -144,4 +146,6 @@ esp_err_t rc522_picc_uid_to_str(const rc522_picc_uid_t *uid, char *buffer, uint8
  */
 esp_err_t rc522_picc_print(const rc522_picc_t *picc);
 
+#ifdef __cplusplus
+}
 #endif

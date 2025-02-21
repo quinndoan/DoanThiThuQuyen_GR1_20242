@@ -1,6 +1,4 @@
-#ifndef RC522_DRIVER_INTERNAL_H
-#define RC522_DRIVER_INTERNAL_H
-#include "driver/gpio.h"
+#include <driver/gpio.h>
 #include "rc522_types_internal.h"
 #include "rc522_driver.h"
 
@@ -41,4 +39,3 @@ esp_err_t rc522_driver_receive(const rc522_driver_handle_t driver, uint8_t addre
 esp_err_t rc522_driver_reset(const rc522_driver_handle_t driver);
 
 esp_err_t rc522_driver_destroy(rc522_driver_handle_t driver);
-#endif

@@ -2,7 +2,6 @@
 #include "rc522.h"
 #include "driver/rc522_spi.h"
 #include "rc522_picc.h"
-#include "task_common.h"
 
 static const char *TAG = "rc522-basic-example";
 

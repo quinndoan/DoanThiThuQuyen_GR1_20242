@@ -1,9 +1,11 @@
-#ifndef RC522_PCD_INTERNAL_H
-#define RC522_PCD_INTERNAL_H
+#pragma once
 
 #include "rc522_types_internal.h"
 #include "rc522_pcd.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RC522_PCD_MOD_WIDTH_REG_RESET_VALUE (38)
 #define RC522_PCD_TX_MODE_REG_RESET_VALUE   (0x00)
@@ -461,4 +463,6 @@ esp_err_t rc522_pcd_set_bits(const rc522_handle_t rc522, rc522_pcd_register_t ad
 
 esp_err_t rc522_pcd_clear_bits(const rc522_handle_t rc522, rc522_pcd_register_t addr, uint8_t bits);
 
+#ifdef __cplusplus
+}
 #endif
