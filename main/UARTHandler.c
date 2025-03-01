@@ -2,13 +2,16 @@
 #include "task_common.h"
 #include <driver/uart.h>
 #include <string.h>
-#include "Global.h"
+
 #define UART_PORT   1
 #define RX_BUF_SIZE     1024
-#define TXD_PIN         17
-#define RXD_PIN         16
+#define TXD_PIN         5
+#define RXD_PIN         4
 
 static const char* TAG = "uartTask";
+extern char g_uid[20];
+extern char g_atqa[10];
+extern char g_sak[10];
 
 void initialize_uart() {
     const uart_config_t uart_config = {
@@ -40,24 +43,22 @@ void process_uart_command(const char* command) {
     if (strcmp(command, "who") == 0) {
         const char* response = "Quyen's device";
         uart_write_bytes(UART_PORT, response, strlen(response));
-        vTaskDelay(500);
+        vTaskDelay(100);
     } else if (strcmp(command, "uid") == 0) {
         uart_write_bytes(UART_PORT, &g_uid, strlen(g_uid));
-        vTaskDelay(500);
+        vTaskDelay(100);
     } else if (strcmp(command, "atqa") == 0) {
         uart_write_bytes(UART_PORT, &g_atqa, strlen(g_atqa));
-        vTaskDelay(500);
+        vTaskDelay(100);
     } else if (strcmp(command, "sak") == 0) {
         uart_write_bytes(UART_PORT, &g_sak, strlen(g_sak));
-        vTaskDelay(500);
+        vTaskDelay(100);
     } else if (strcmp(command, "all")==0){
         // send all information
-        uart_write_bytes(UART_PORT, &g_uid, strlen(g_uid));
-        vTaskDelay(500);
-        uart_write_bytes(UART_PORT, &g_atqa, strlen(g_atqa));
-        vTaskDelay(500);
-        uart_write_bytes(UART_PORT, &g_sak, strlen(g_sak));
-        vTaskDelay(500);
+        char combined[60];
+        snprintf(combined, sizeof(combined), "%s%s%s", g_uid, g_atqa, g_sak);
+        uart_write_bytes(UART_PORT, combined, strlen(combined));
+        vTaskDelay(100);
     }
     else {
         const char* response = "Unknown command";

@@ -1,4 +1,6 @@
-idf_component_register(SRCS "main.c"
+idf_component_register(SRCS main.c
+                    UARTHandler.c
+                    RIFD_Handler.c
                     INCLUDE_DIRS "."
                     REQUIRES esp-idf-rc522-main
                     nvs_flash
