@@ -1,10 +1,11 @@
 #include <esp_log.h>
 #include "RIFD_Handler.h"
+#include "picc/rc522_mifare.h"
 static const char *TAG = "rc522_reading_card";
 
-extern char g_uid[10];
-extern char g_atqa[5];
-extern char g_sak[5];
+extern char g_uid[20];
+extern char g_atqa[10];
+extern char g_sak[10];
 
 // Định nghĩa các biến toàn cục
 rc522_driver_handle_t driver;
@@ -22,6 +23,74 @@ rc522_spi_config_t driver_config = {
     .rst_io_num = RC522_SCANNER_GPIO_RST,
 };
 
+// Biến lưu thẻ đang active
+rc522_picc_t *active_picc = NULL;
+
+// Hàm chuyển đổi hex string thành bytes
+static esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len) {
+    size_t len = strlen(hex_string);
+    if (len % 2 != 0 || len / 2 > max_len) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    for (size_t i = 0; i < len; i += 2) {
+        char byte_str[3] = {hex_string[i], hex_string[i+1], '\0'};
+        bytes[i/2] = (uint8_t)strtol(byte_str, NULL, 16);
+    }
+    
+    return ESP_OK;
+}
+
+// Hàm ghi dữ liệu vào thẻ RFID
+esp_err_t write_to_rfid_card(const char* data) {
+    esp_err_t ret = ESP_OK;
+    
+    // Kiểm tra xem có thẻ active không
+    if (active_picc == NULL) {
+        ESP_LOGE(TAG, "No active RFID card");
+        return ESP_ERR_INVALID_STATE;
+    }
+    
+    // Kiểm tra loại thẻ (Ultralight)
+    if (active_picc->type != RC522_PICC_TYPE_MIFARE_UL) {
+        ESP_LOGE(TAG, "Card is not MIFARE Ultralight");
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    ESP_LOGI(TAG, "Writing data to MIFARE Ultralight card: %s", data);
+    
+    // Chuẩn bị dữ liệu để ghi
+    size_t data_len = strlen(data);
+    uint8_t block_data[RC522_MIFARE_BLOCK_SIZE] = {0};
+    
+    // Đối với MIFARE Ultralight, kích thước block là 4 bytes
+    // nhưng chúng ta sẽ sử dụng API mifare_write vẫn yêu cầu 16 bytes
+    
+    if (hex_string_to_bytes(data, block_data, RC522_MIFARE_BLOCK_SIZE) != ESP_OK) {
+        ESP_LOGE(TAG, "Invalid hex data");
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    // Ghi vào page 4 (vùng người dùng bắt đầu từ page 4)
+    // MIFARE Ultralight có 16 pages, mỗi page 4 bytes
+    ret = rc522_mifare_write(scanner, active_picc, 4, block_data);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write data to RFID: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
+    ESP_LOGI(TAG, "Successfully wrote data to RFID card");
+    
+    // Cập nhật UID trong các biến global (chỉ cho mục đích hiển thị)
+    strncpy(g_uid, data, sizeof(g_uid) - 1);
+    g_uid[sizeof(g_uid) - 1] = '\0';
+    
+    // Lưu data vào NVS
+    save_rfid_data_to_nvs();
+    
+    return ESP_OK;
+}
+
 // Hàm khởi tạo NVS
 esp_err_t init_nvs(void)
 {
@@ -34,7 +103,7 @@ esp_err_t init_nvs(void)
 }
 
 // Hàm lưu dữ liệu RFID vào NVS
-static void save_rfid_data_to_nvs(void)
+void save_rfid_data_to_nvs(void)
 {
     nvs_handle_t nvs_handle;
     esp_err_t err;
@@ -124,6 +193,9 @@ void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, v
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
         rc522_picc_print(picc);
         
+        // Lưu trữ thẻ đang active
+        active_picc = picc;
+        
         // Lưu UID vào biến global
         char uid_buffer[RC522_PICC_UID_STR_BUFFER_SIZE_MAX];
         if (rc522_picc_uid_to_str(&picc->uid, uid_buffer, sizeof(uid_buffer)) == ESP_OK) {
@@ -147,5 +219,6 @@ void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, v
     }
     else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
         ESP_LOGI(TAG, "Card has been removed");
+        active_picc = NULL;
     }
 }

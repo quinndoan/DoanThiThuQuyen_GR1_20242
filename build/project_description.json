@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "RFC_Try",
-    "project_version":    "f2b27b9-dirty",
+    "project_version":    "33e7694-dirty",
     "project_path":       "D:/RFC_BUILD/RFC_SPI",
     "idf_path":           "C:/esp/v5.3/esp-idf",
     "build_dir":          "D:/RFC_BUILD/RFC_SPI/build",

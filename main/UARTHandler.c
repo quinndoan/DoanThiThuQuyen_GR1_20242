@@ -2,6 +2,8 @@
 #include "task_common.h"
 #include <driver/uart.h>
 #include <string.h>
+#include "RIFD_Handler.h"
+#include <esp_log.h>
 
 #define UART_PORT   1
 #define RX_BUF_SIZE     1024
@@ -40,18 +42,49 @@ void initialize_uart() {
  }
  
 void process_uart_command(const char* command) {
-    if (strcmp(command, "who") == 0) {
+    ESP_LOGI(TAG, "Received command: %s", command);
+    
+    // Kiểm tra lệnh "write"
+    if (strncmp(command, "write ", 6) == 0) {
+        const char* data = command + 6; // Bỏ qua "write " và lấy phần dữ liệu
+        
+        if (strlen(data) > 0) {
+            esp_err_t result = write_to_rfid_card(data);
+            if (result == ESP_OK) {
+                const char* response = "Write successful";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else if (result == ESP_ERR_INVALID_STATE) {
+                const char* response = "No card detected";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else if (result == ESP_ERR_INVALID_ARG) {
+                const char* response = "Invalid data or card type";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else {
+                char response[50];
+                snprintf(response, sizeof(response), "Write failed: %s", esp_err_to_name(result));
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+        } else {
+            const char* response = "Missing data to write";
+            uart_write_bytes(UART_PORT, response, strlen(response));
+        }
+        vTaskDelay(100);
+    }
+    else if (strcmp(command, "who") == 0) {
         const char* response = "Quyen's device";
         uart_write_bytes(UART_PORT, response, strlen(response));
         vTaskDelay(100);
     } else if (strcmp(command, "uid") == 0) {
-        uart_write_bytes(UART_PORT, &g_uid, strlen(g_uid));
+        uart_write_bytes(UART_PORT, g_uid, strlen(g_uid));
         vTaskDelay(100);
     } else if (strcmp(command, "atqa") == 0) {
-        uart_write_bytes(UART_PORT, &g_atqa, strlen(g_atqa));
+        uart_write_bytes(UART_PORT, g_atqa, strlen(g_atqa));
         vTaskDelay(100);
     } else if (strcmp(command, "sak") == 0) {
-        uart_write_bytes(UART_PORT, &g_sak, strlen(g_sak));
+        uart_write_bytes(UART_PORT, g_sak, strlen(g_sak));
         vTaskDelay(100);
     } else if (strcmp(command, "all")==0){
         // send all information
@@ -73,7 +106,7 @@ void rx_task(void *arg) {
         const int rxBytes = uart_read_bytes(UART_PORT, data, RX_BUF_SIZE, 500);
         if (rxBytes > 0) {
             data[rxBytes] = '\0';
-          //  ESP_LOGI(TAG, "Read bytes from flash");
+            ESP_LOGI(TAG, "Received %d bytes: %s", rxBytes, data);
             process_uart_command((const char*)data);
         }
     }
