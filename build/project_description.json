@@ -1,7 +1,11 @@
 {
     "version":            "1.1",
     "project_name":       "RFC_Try",
+<<<<<<< HEAD
     "project_version":    "33e7694-dirty",
+=======
+    "project_version":    "186948e-dirty",
+>>>>>>> parent of 33e7694 (add connect to UART successfully)
     "project_path":       "D:/RFC_BUILD/RFC_SPI",
     "idf_path":           "C:/esp/v5.3/esp-idf",
     "build_dir":          "D:/RFC_BUILD/RFC_SPI/build",
@@ -1180,7 +1184,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "D:/RFC_BUILD/RFC_SPI/build/esp-idf/main/libmain.a",
-            "sources": [ "D:/RFC_BUILD/RFC_SPI/main/main.c", "D:/RFC_BUILD/RFC_SPI/main/UARTHandler.c", "D:/RFC_BUILD/RFC_SPI/main/RIFD_Handler.c" ],
+            "sources": [ "D:/RFC_BUILD/RFC_SPI/main/main.c" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
