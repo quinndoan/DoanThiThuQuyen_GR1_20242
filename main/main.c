@@ -5,8 +5,11 @@
 #include "task_common.h"
 #include "nvs_flash.h"
 #include "nvs.h"
+#include "Global.h"
 #include "UARTHandler.h"
 #include "RIFD_Handler.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 char g_uid[20];
 char g_atqa[10];
@@ -38,4 +41,7 @@ void app_main()
     rc522_create(&scanner_config, &scanner);
     rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL); // handle variable, trigger, handle function, null
     rc522_start(scanner);
+    
+    // Tạo task đọc liên tục thẻ RFID
+    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
 }
