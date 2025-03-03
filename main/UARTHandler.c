@@ -46,7 +46,7 @@ void process_uart_command(const char* command) {
     
     // Kiểm tra lệnh "write"
     if (strncmp(command, "write ", 6) == 0) {
-        const char* data = command + 6; // Bỏ qua "write " và lấy phần dữ liệu
+        const char* data = command + 6; // +6 để bỏ qua "write "
         
         if (strlen(data) > 0) {
             esp_err_t result = write_to_rfid_card(data);

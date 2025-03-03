@@ -7,7 +7,6 @@ extern char g_uid[20];
 extern char g_atqa[10];
 extern char g_sak[10];
 
-// Định nghĩa các biến toàn cục
 rc522_driver_handle_t driver;
 rc522_handle_t scanner;
 rc522_spi_config_t driver_config = {
@@ -64,7 +63,7 @@ esp_err_t write_to_rfid_card(const char* data) {
     uint8_t block_data[RC522_MIFARE_BLOCK_SIZE] = {0};
     
     // Đối với MIFARE Ultralight, kích thước block là 4 bytes
-    // nhưng chúng ta sẽ sử dụng API mifare_write vẫn yêu cầu 16 bytes
+    // nhưng sử dụng API mifare_write (yêu cầu 16 bytes)
     
     if (hex_string_to_bytes(data, block_data, RC522_MIFARE_BLOCK_SIZE) != ESP_OK) {
         ESP_LOGE(TAG, "Invalid hex data");
@@ -81,7 +80,7 @@ esp_err_t write_to_rfid_card(const char* data) {
     
     ESP_LOGI(TAG, "Successfully wrote data to RFID card");
     
-    // Cập nhật UID trong các biến global (chỉ cho mục đích hiển thị)
+    // Cập nhật UID trong các biến global
     strncpy(g_uid, data, sizeof(g_uid) - 1);
     g_uid[sizeof(g_uid) - 1] = '\0';
     
