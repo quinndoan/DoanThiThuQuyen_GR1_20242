@@ -33,7 +33,7 @@ void continuous_read_task(void *arg) {
         if (active_picc != NULL) {
             // Đọc lại thông tin thẻ
             rc522_picc_t picc;
-            esp_err_t ret = rc522_picc_select_picc(scanner, &active_picc->uid, &picc);
+            esp_err_t ret = rc522_picc_print(&picc);
             
             if (ret == ESP_OK) {
                 // Cập nhật thông tin thẻ
@@ -62,12 +62,12 @@ void continuous_read_task(void *arg) {
         }
         
         // Đợi một khoảng thời gian ngắn trước khi đọc lại
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay((100));
     }
 }
 
 // Hàm chuyển đổi hex string thành bytes
-static esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len) {
+esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len) {
     size_t len = strlen(hex_string);
     if (len % 2 != 0 || len / 2 > max_len) {
         return ESP_ERR_INVALID_ARG;

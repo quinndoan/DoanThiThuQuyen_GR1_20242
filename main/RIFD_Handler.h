@@ -23,11 +23,12 @@ extern rc522_spi_config_t driver_config;
 // Định nghĩa key mặc định cho MIFARE Ultralight C
 #define DEFAULT_KEY_VALUE {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 
+void continuous_read_task(void *arg);
 esp_err_t init_nvs(void);
 void read_rfid_data_from_nvs(void);
-void continuous_read_task(void *arg);
-void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data);
 void save_rfid_data_to_nvs(void);
+void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data);
+esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len);
 // Thêm hàm mới để ghi dữ liệu vào thẻ RFID
 esp_err_t write_to_rfid_card(const char* data);
 

@@ -3,10 +3,11 @@
 #include <driver/uart.h>
 #include <string.h>
 #include "Global.h"
+#include "RIFD_Handler.h"
 #define UART_PORT   1
 #define RX_BUF_SIZE     1024
-#define TXD_PIN         17
-#define RXD_PIN         16
+#define TXD_PIN         5
+#define RXD_PIN         4
 
 static const char* TAG = "uartTask";
 
@@ -37,11 +38,11 @@ void initialize_uart() {
  }
  
 void process_uart_command(const char* command) {
-    ESP_LOGI(TAG, "Received command: %s", command);
+    printf("Received command: %s\n", command);
     
-    // Kiểm tra lệnh "write"
+    // Check "write" command
     if (strncmp(command, "write ", 6) == 0) {
-        const char* data = command + 6; // +6 để bỏ qua "write "
+        const char* data = command + 6; // Skip "write " prefix
         
         if (strlen(data) > 0) {
             esp_err_t result = write_to_rfid_card(data);
@@ -103,7 +104,7 @@ void rx_task(void *arg) {
         const int rxBytes = uart_read_bytes(UART_PORT, data, RX_BUF_SIZE, 500);
         if (rxBytes > 0) {
             data[rxBytes] = '\0';
-            ESP_LOGI(TAG, "Received %d bytes: %s", rxBytes, data);
+            printf("Received %d bytes: %s", rxBytes, data);
             process_uart_command((const char*)data);
         }
     }

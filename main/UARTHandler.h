@@ -1,7 +1,7 @@
 #ifndef UART_TASK_H
 #define UART_TASK_H
 
-void initializeUART();
+void initialize_uart();
 //int sendData();     // data length
 void tx_task();     // truyền data vào write byte   
 void rx_task();     // read byte từ RX
