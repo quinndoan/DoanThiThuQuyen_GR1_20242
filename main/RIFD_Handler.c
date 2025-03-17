@@ -1,10 +1,11 @@
 #include <esp_log.h>
 #include "RIFD_Handler.h"
+#include "picc/rc522_mifare.h"
 static const char *TAG = "rc522_reading_card";
-
-extern char g_uid[10];
-extern char g_atqa[5];
-extern char g_sak[5];
+//#define RC522_MIFARE_BLOCK_SIZE 16
+extern char g_uid[20];
+extern char g_atqa[10];
+extern char g_sak[10];
 
 // Định nghĩa các biến toàn cục
 rc522_driver_handle_t driver;
@@ -73,6 +74,20 @@ void continuous_read_task(void *arg) {
         vTaskDelay((100));
     }
 }
+esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len) {
+    size_t len = strlen(hex_string);
+    if (len % 2 != 0 || len / 2 > max_len) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    for (size_t i = 0; i < len; i += 2) {
+        char byte_str[3] = {hex_string[i], hex_string[i+1], '\0'};
+        bytes[i/2] = (uint8_t)strtol(byte_str, NULL, 16);
+    }
+    
+    return ESP_OK;
+}
+
 esp_err_t write_to_rfid_card(const char* data) {
     esp_err_t ret = ESP_OK;
     
@@ -118,7 +133,7 @@ esp_err_t write_to_rfid_card(const char* data) {
     return ESP_OK;
 }
 // Hàm lưu dữ liệu RFID vào NVS
-static void save_rfid_data_to_nvs(void)
+void save_rfid_data_to_nvs(void)
 {
     nvs_handle_t nvs_handle;
     esp_err_t err;
@@ -180,7 +195,7 @@ void read_rfid_data_from_nvs(void)
     }
 
     // Đọc ATQA
-    required_size = 20;
+    required_size = 10;
     err = nvs_get_str(nvs_handle, NVS_KEY_ATQA, g_atqa, &required_size);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "No ATQA data found");
@@ -189,7 +204,7 @@ void read_rfid_data_from_nvs(void)
     }
 
     // Đọc SAK
-    required_size = 20;
+    required_size = 10;
     err = nvs_get_str(nvs_handle, NVS_KEY_SAK, g_sak, &required_size);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "No SAK data found");

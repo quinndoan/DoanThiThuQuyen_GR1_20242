@@ -23,7 +23,9 @@ extern rc522_spi_config_t driver_config;
 
 esp_err_t init_nvs(void);
 void continuous_read_task(void *arg);
+esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len);
 esp_err_t write_to_rfid_card(const char* data);
+void save_rfid_data_to_nvs(void);
 void read_rfid_data_from_nvs(void);
 void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data);
 

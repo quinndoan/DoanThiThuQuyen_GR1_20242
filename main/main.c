@@ -25,9 +25,9 @@ void app_main()
     
     read_rfid_data_from_nvs();
     
-    // Create UART receive task to handle incoming commands
-    xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
+    
     // Start RC522
+    //driver_config.spi_bus_config.max_transfer_sz = 4096; // Set the correct FIFO length
     rc522_spi_create(&driver_config, &driver);
     rc522_driver_install(driver);
 
@@ -39,7 +39,9 @@ void app_main()
     rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL); // handle variable, trigger, handle function, null
     rc522_start(scanner);
 
+    // Create UART receive task to handle incoming commands
+    xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
     // thêm hàm continuous_read_task, check có lỗi uart
-    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
+  //  xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
 }
 
