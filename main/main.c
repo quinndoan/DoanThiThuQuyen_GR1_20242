@@ -38,4 +38,8 @@ void app_main()
     rc522_create(&scanner_config, &scanner);
     rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL); // handle variable, trigger, handle function, null
     rc522_start(scanner);
+
+    // thêm hàm continuous_read_task, check có lỗi uart
+    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
 }
+

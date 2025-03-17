@@ -32,6 +32,47 @@ esp_err_t init_nvs(void)
     }
     return ret;
 }
+// Biến lưu thẻ đang active, global
+rc522_picc_t *active_picc = NULL;
+
+// Hàm đọc liên tục thẻ RFID
+void continuous_read_task(void *arg) {
+    while (1) {
+        if (active_picc != NULL) {
+            // Đọc lại thông tin thẻ
+            rc522_picc_t picc;
+            esp_err_t ret = rc522_picc_print(&picc);
+            
+            if (ret == ESP_OK) {
+                // Cập nhật thông tin thẻ
+                *active_picc = picc;
+                
+                // Cập nhật các biến global
+                char uid_buffer[RC522_PICC_UID_STR_BUFFER_SIZE_MAX];
+                if (rc522_picc_uid_to_str(&picc.uid, uid_buffer, sizeof(uid_buffer)) == ESP_OK) {
+                    strncpy(g_uid, uid_buffer, sizeof(g_uid) - 1);
+                    g_uid[sizeof(g_uid) - 1] = '\0';
+                }
+                
+                snprintf(g_atqa, sizeof(g_atqa), "%02X%02X", 
+                         (uint8_t)((picc.atqa.source >> 8) & 0xFF),
+                         (uint8_t)(picc.atqa.source & 0xFF));
+                
+                snprintf(g_sak, sizeof(g_sak), "%02X", picc.sak);
+                
+                ESP_LOGI(TAG, "Card continuously read - UID: %s, ATQA: %s, SAK: %s", 
+                         g_uid, g_atqa, g_sak);
+            } else {
+                // Nếu không đọc được thẻ, có thể thẻ đã bị lấy ra
+                active_picc = NULL;
+                ESP_LOGI(TAG, "Card removed or not readable");
+            }
+        }
+        
+        // Đợi một khoảng thời gian ngắn trước khi đọc lại
+        vTaskDelay((100));
+    }
+}
 
 // Hàm lưu dữ liệu RFID vào NVS
 static void save_rfid_data_to_nvs(void)
