@@ -73,7 +73,50 @@ void continuous_read_task(void *arg) {
         vTaskDelay((100));
     }
 }
-
+esp_err_t write_to_rfid_card(const char* data) {
+    esp_err_t ret = ESP_OK;
+    
+    // Kiểm tra xem có thẻ active không
+    if (active_picc == NULL) {
+        ESP_LOGE(TAG, "No active RFID card");
+        return ESP_ERR_INVALID_STATE;
+    }
+    
+    // Kiểm tra loại thẻ (Ultralight)
+    if (active_picc->type != RC522_PICC_TYPE_MIFARE_UL) {
+        ESP_LOGE(TAG, "Card is not MIFARE Ultralight");
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    ESP_LOGI(TAG, "Writing data to MIFARE Ultralight card: %s", data);
+    
+    // Chuẩn bị dữ liệu để ghi
+    size_t data_len = strlen(data);
+    uint8_t block_data[RC522_MIFARE_BLOCK_SIZE] = {0};
+    
+    if (hex_string_to_bytes(data, block_data, RC522_MIFARE_BLOCK_SIZE) != ESP_OK) {
+        ESP_LOGE(TAG, "Invalid hex data");
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    // Ghi vào sector 1, block 4
+    ret = rc522_mifare_write(scanner, active_picc, 4, block_data);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write data to RFID: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
+    ESP_LOGI(TAG, "Successfully wrote data to RFID card");
+    
+    // Cập nhật UID trong các biến global
+    strncpy(g_uid, data, sizeof(g_uid) - 1);
+    g_uid[sizeof(g_uid) - 1] = '\0';
+    
+    // Lưu data vào NVS
+    save_rfid_data_to_nvs();
+    
+    return ESP_OK;
+}
 // Hàm lưu dữ liệu RFID vào NVS
 static void save_rfid_data_to_nvs(void)
 {

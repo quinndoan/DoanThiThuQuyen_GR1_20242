@@ -40,7 +40,36 @@ void initialize_uart() {
  }
  
 void process_uart_command(const char* command) {
-    if (strcmp(command, "who") == 0) {
+    // Check "write" command
+    if (strncmp(command, "write ", 6) == 0) {
+        const char* data = command + 6; // Skip "write " prefix
+        
+        if (strlen(data) > 0) {
+            esp_err_t result = write_to_rfid_card(data);
+            if (result == ESP_OK) {
+                const char* response = "Write successful";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else if (result == ESP_ERR_INVALID_STATE) {
+                const char* response = "No card detected";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else if (result == ESP_ERR_INVALID_ARG) {
+                const char* response = "Invalid data or card type";
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+            else {
+                char response[50];
+                snprintf(response, sizeof(response), "Write failed: %s", esp_err_to_name(result));
+                uart_write_bytes(UART_PORT, response, strlen(response));
+            }
+        } else {
+            const char* response = "Missing data to write";
+            uart_write_bytes(UART_PORT, response, strlen(response));
+        }
+        vTaskDelay(100);
+    }
+   else if (strcmp(command, "who") == 0) {
         const char* response = "Quyen's device";
         uart_write_bytes(UART_PORT, response, strlen(response));
         vTaskDelay(100);
