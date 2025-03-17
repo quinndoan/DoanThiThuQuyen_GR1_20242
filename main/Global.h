@@ -1,7 +1,6 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "string.h"
 
 // Khai báo biến global
 extern char g_uid[20];

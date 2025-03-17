@@ -3,11 +3,9 @@
 #include "picc/rc522_mifare.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "Global.h"
+#include "string.h"
 static const char *TAG = "rc522_reading_card";
-
-extern char g_uid[20];
-extern char g_atqa[10];
-extern char g_sak[10];
 
 rc522_driver_handle_t driver;
 rc522_handle_t scanner;
@@ -24,7 +22,7 @@ rc522_spi_config_t driver_config = {
     .rst_io_num = RC522_SCANNER_GPIO_RST,
 };
 
-// Biến lưu thẻ đang active
+// Biến lưu thẻ đang active, global
 rc522_picc_t *active_picc = NULL;
 
 // Hàm đọc liên tục thẻ RFID
@@ -108,7 +106,7 @@ esp_err_t write_to_rfid_card(const char* data) {
         return ESP_ERR_INVALID_ARG;
     }
     
-    // Ghi vào page 4 (vùng người dùng bắt đầu từ page 4)
+    // Ghi vào sector 1, block 4
     ret = rc522_mifare_write(scanner, active_picc, 4, block_data);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to write data to RFID: %s", esp_err_to_name(ret));
