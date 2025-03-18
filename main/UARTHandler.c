@@ -40,7 +40,7 @@ void initialize_uart() {
  }
  
 void process_uart_command(const char* command) {
-    // Check "write" command
+    // add write command
     if (strncmp(command, "write ", 6) == 0) {
         const char* data = command + 6; // Skip "write " prefix
         
