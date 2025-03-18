@@ -19,15 +19,11 @@ extern rc522_spi_config_t driver_config;
 
 void app_main()
 {
-    // Initialize UART
-    initialize_uart();
+   initialize_uart();
     ESP_ERROR_CHECK(init_nvs());
     
     read_rfid_data_from_nvs();
-    
-    
     // Start RC522
-    //driver_config.spi_bus_config.max_transfer_sz = 4096; // Set the correct FIFO length
     rc522_spi_create(&driver_config, &driver);
     rc522_driver_install(driver);
 
@@ -42,6 +38,7 @@ void app_main()
     // Create UART receive task to handle incoming commands
     xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
     // thêm hàm continuous_read_task, check có lỗi uart
-  //  xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
+    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
 }
+
 
