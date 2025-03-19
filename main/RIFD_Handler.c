@@ -1,6 +1,8 @@
 #include <esp_log.h>
+#include <esp_err.h>
 #include "RIFD_Handler.h"
-#include "picc/rc522_mifare.h"
+#include <esp_check.h>
+
 static const char *TAG = "rc522_reading_card";
 //#define RC522_MIFARE_BLOCK_SIZE 16
 extern char g_uid[20];
@@ -10,6 +12,7 @@ extern char g_sak[10];
 // Định nghĩa các biến toàn cục
 rc522_driver_handle_t driver;
 rc522_handle_t scanner;
+rc522_picc_t *picc;
 rc522_spi_config_t driver_config = {
     .host_id = SPI3_HOST,
     .bus_config = &(spi_bus_config_t){
@@ -33,105 +36,77 @@ esp_err_t init_nvs(void)
     }
     return ret;
 }
-// Biến lưu thẻ đang active, global
-rc522_picc_t *active_picc = NULL;
 
-// Hàm đọc liên tục thẻ RFID
-void continuous_read_task(void *arg) {
-    while (1) {
-        if (active_picc != NULL) {
-            // Đọc lại thông tin thẻ
-            rc522_picc_t picc;
-            esp_err_t ret = rc522_picc_print(&picc);
-            
-            if (ret == ESP_OK) {
-                // Cập nhật thông tin thẻ
-                *active_picc = picc;
-                
-                // Cập nhật các biến global
-                char uid_buffer[RC522_PICC_UID_STR_BUFFER_SIZE_MAX];
-                if (rc522_picc_uid_to_str(&picc.uid, uid_buffer, sizeof(uid_buffer)) == ESP_OK) {
-                    strncpy(g_uid, uid_buffer, sizeof(g_uid) - 1);
-                    g_uid[sizeof(g_uid) - 1] = '\0';
-                }
-                
-                snprintf(g_atqa, sizeof(g_atqa), "%02X%02X", 
-                         (uint8_t)((picc.atqa.source >> 8) & 0xFF),
-                         (uint8_t)(picc.atqa.source & 0xFF));
-                
-                snprintf(g_sak, sizeof(g_sak), "%02X", picc.sak);
-                
-                ESP_LOGI(TAG, "Card continuously read - UID: %s, ATQA: %s, SAK: %s", 
-                         g_uid, g_atqa, g_sak);
-            } else {
-                // Nếu không đọc được thẻ, có thể thẻ đã bị lấy ra
-                active_picc = NULL;
-                ESP_LOGI(TAG, "Card removed or not readable");
-            }
+
+void dump_block(uint8_t buffer[RC522_MIFARE_BLOCK_SIZE])
+{
+    for (uint8_t i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
+        esp_log_write(ESP_LOG_INFO, TAG, "%02" RC522_X " ", buffer[i]);
+    }
+
+    esp_log_write(ESP_LOG_INFO, TAG, "\n");
+}
+
+esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
+{
+    const char *data_to_write = data;
+    const uint8_t block_address = 4;
+    rc522_mifare_key_t key = {
+        .value = { RC522_MIFARE_KEY_VALUE_DEFAULT },
+    };
+
+    if (strlen(data_to_write) > 14) {
+        ESP_LOGW(TAG, "Make sure data length is no more than 14 characters");
+
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    ESP_RETURN_ON_ERROR(rc522_mifare_auth(scanner, picc, block_address, &key), TAG, "auth fail");
+
+    uint8_t read_buffer[RC522_MIFARE_BLOCK_SIZE];
+    uint8_t write_buffer[RC522_MIFARE_BLOCK_SIZE];
+
+    // Read
+    ESP_LOGI(TAG, "Reading data from the block %d", block_address);
+    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
+    ESP_LOGI(TAG, "Current data:");
+    dump_block(read_buffer);
+    // ~Read
+
+    // Write
+    strncpy((char *)write_buffer, data_to_write, RC522_MIFARE_BLOCK_SIZE);
+    
+    ESP_LOGI(TAG, "Writing data to block %d:", block_address);
+    dump_block(write_buffer);
+    ESP_RETURN_ON_ERROR(rc522_mifare_write(scanner, picc, block_address, write_buffer), TAG, "write fail");
+
+    // Verify written data
+    ESP_LOGI(TAG, "Write done. Verifying...");
+    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
+    ESP_LOGI(TAG, "New data in block %d:", block_address);
+    dump_block(read_buffer);
+
+    // Validate
+    bool rw_missmatch = false;
+    for (uint8_t i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
+        if (write_buffer[i] != read_buffer[i]) {
+            rw_missmatch = true;
+            ESP_LOGE(TAG, "Mismatch at byte %d (w:%02X, r:%02X)", i, write_buffer[i], read_buffer[i]);
+            break;
         }
-        
-        // Đợi một khoảng thời gian ngắn trước khi đọc lại
-        vTaskDelay((100));
     }
-}
-esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len) {
-    size_t len = strlen(hex_string);
-    if (len % 2 != 0 || len / 2 > max_len) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    
-    for (size_t i = 0; i < len; i += 2) {
-        char byte_str[3] = {hex_string[i], hex_string[i+1], '\0'};
-        bytes[i/2] = (uint8_t)strtol(byte_str, NULL, 16);
-    }
-    
-    return ESP_OK;
+//if (!rw_missmatch) {
+        ESP_LOGI(TAG, "Write verified successfully");
+        // Update global variables
+        strncpy(g_uid, data, sizeof(g_uid) - 1);
+        g_uid[sizeof(g_uid) - 1] = '\0';
+        save_rfid_data_to_nvs();
+        return ESP_OK;
+        //}
+
+    return ESP_FAIL;
 }
 
-esp_err_t write_to_rfid_card(const char* data) {
-    esp_err_t ret = ESP_OK;
-    
-    // Kiểm tra xem có thẻ active không
-    if (active_picc == NULL) {
-        ESP_LOGE(TAG, "No active RFID card");
-        return ESP_ERR_INVALID_STATE;
-    }
-    
-    // Kiểm tra loại thẻ (Ultralight)
-    if (active_picc->type != RC522_PICC_TYPE_MIFARE_UL) {
-        ESP_LOGE(TAG, "Card is not MIFARE Ultralight");
-        return ESP_ERR_INVALID_ARG;
-    }
-    
-    ESP_LOGI(TAG, "Writing data to MIFARE Ultralight card: %s", data);
-    
-    // Chuẩn bị dữ liệu để ghi
-    size_t data_len = strlen(data);
-    uint8_t block_data[RC522_MIFARE_BLOCK_SIZE] = {0};
-    
-    if (hex_string_to_bytes(data, block_data, RC522_MIFARE_BLOCK_SIZE) != ESP_OK) {
-        ESP_LOGE(TAG, "Invalid hex data");
-        return ESP_ERR_INVALID_ARG;
-    }
-    
-    // Ghi vào sector 1, block 4
-    ret = rc522_mifare_write(scanner, active_picc, 4, block_data);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to write data to RFID: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    
-    ESP_LOGI(TAG, "Successfully wrote data to RFID card");
-    
-    // Cập nhật UID trong các biến global
-    strncpy(g_uid, data, sizeof(g_uid) - 1);
-    g_uid[sizeof(g_uid) - 1] = '\0';
-    
-    // Lưu data vào NVS
-    save_rfid_data_to_nvs();
-    
-    return ESP_OK;
-}
 // Hàm lưu dữ liệu RFID vào NVS
 void save_rfid_data_to_nvs(void)
 {
@@ -218,7 +193,7 @@ void read_rfid_data_from_nvs(void)
 void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data)
 {
     rc522_picc_state_changed_event_t *event = (rc522_picc_state_changed_event_t *)data;
-    rc522_picc_t *picc = event->picc;
+    picc = event->picc;
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
         rc522_picc_print(picc);

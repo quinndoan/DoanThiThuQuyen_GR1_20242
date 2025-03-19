@@ -36,9 +36,7 @@ void app_main()
     rc522_start(scanner);
 
     // Create UART receive task to handle incoming commands
-    xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
-    // thêm hàm continuous_read_task, check có lỗi uart
-    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
+    xTaskCreate(rx_task, "uart_rx_task", 4096, NULL, configMAX_PRIORITIES-1, NULL);
 }
 
 
