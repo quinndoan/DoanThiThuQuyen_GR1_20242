@@ -2,6 +2,8 @@
 #include <esp_err.h>
 #include "RIFD_Handler.h"
 #include <esp_check.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 static const char *TAG = "rc522_reading_card";
 //#define RC522_MIFARE_BLOCK_SIZE 16
@@ -57,32 +59,62 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
 
     if (strlen(data_to_write) > 14) {
         ESP_LOGW(TAG, "Make sure data length is no more than 14 characters");
-
         return ESP_ERR_INVALID_ARG;
     }
 
-    ESP_RETURN_ON_ERROR(rc522_mifare_auth(scanner, picc, block_address, &key), TAG, "auth fail");
+    // Add delay before authentication
+    vTaskDelay(pdMS_TO_TICKS(10));
+    
+    esp_err_t ret = rc522_mifare_auth(scanner, picc, block_address, &key);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Authentication failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Add delay after authentication
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     uint8_t read_buffer[RC522_MIFARE_BLOCK_SIZE];
     uint8_t write_buffer[RC522_MIFARE_BLOCK_SIZE];
 
-    // Read
-    ESP_LOGI(TAG, "Reading data from the block %d", block_address);
-    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
+    // Read current data
+    ESP_LOGI(TAG, "Reading data from block %d", block_address);
+    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Read failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
     ESP_LOGI(TAG, "Current data:");
     dump_block(read_buffer);
-    // ~Read
 
-    // Write
+    // Add delay before write
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // Prepare and write data
+    memset(write_buffer, 0, RC522_MIFARE_BLOCK_SIZE);
     strncpy((char *)write_buffer, data_to_write, RC522_MIFARE_BLOCK_SIZE);
     
     ESP_LOGI(TAG, "Writing data to block %d:", block_address);
     dump_block(write_buffer);
-    ESP_RETURN_ON_ERROR(rc522_mifare_write(scanner, picc, block_address, write_buffer), TAG, "write fail");
+    
+    ret = rc522_mifare_write(scanner, picc, block_address, write_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Write failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Add delay before verification
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // Verify written data
     ESP_LOGI(TAG, "Write done. Verifying...");
-    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
+    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Verification read failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
     ESP_LOGI(TAG, "New data in block %d:", block_address);
     dump_block(read_buffer);
 
@@ -95,14 +127,16 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
             break;
         }
     }
-//if (!rw_missmatch) {
+
+    if (!rw_missmatch) {
         ESP_LOGI(TAG, "Write verified successfully");
         // Update global variables
+        bzero(g_uid, sizeof(g_uid));
         strncpy(g_uid, data, sizeof(g_uid) - 1);
         g_uid[sizeof(g_uid) - 1] = '\0';
         save_rfid_data_to_nvs();
         return ESP_OK;
-        //}
+    }
 
     return ESP_FAIL;
 }
@@ -223,3 +257,4 @@ void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, v
         ESP_LOGI(TAG, "Card has been removed");
     }
 }
+

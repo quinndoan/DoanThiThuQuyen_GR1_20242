@@ -66,7 +66,7 @@ void process_uart_command(const char* command) {
             const char* response = "Missing data to write\n";
             uart_write_bytes(UART_PORT, response, strlen(response));
         }
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(3000));
+        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
     }
     else if (strcmp(command, "who") == 0) {
         const char* response = "Quyen's device\n";
