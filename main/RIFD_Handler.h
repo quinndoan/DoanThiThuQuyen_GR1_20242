@@ -9,6 +9,10 @@
 #include "nvs.h"
 #include "UARTHandler.h"
 #include "Global.h"
+#include <string.h>
+#include <time.h>
+#include "esp_mac.h"
+#include "picc/rc522_mifare.h"
 
 #define RC522_SPI_BUS_GPIO_MISO    (19)
 #define RC522_SPI_BUS_GPIO_MOSI    (21)
@@ -20,11 +24,13 @@ extern rc522_driver_handle_t driver;
 extern rc522_handle_t scanner;
 extern rc522_spi_config_t driver_config;
 
-// Định nghĩa key mặc định cho MIFARE Ultralight C
-#define DEFAULT_KEY_VALUE {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-
-void continuous_read_task(void *arg);
+void dump_block(uint8_t buffer[RC522_MIFARE_BLOCK_SIZE]);
+esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data);
 esp_err_t init_nvs(void);
+void continuous_read_task(void *arg);
+esp_err_t hex_string_to_bytes(const char* hex_string, uint8_t* bytes, size_t max_len);
+esp_err_t write_to_rfid_card(const char* data);
+void save_rfid_data_to_nvs(void);
 void read_rfid_data_from_nvs(void);
 void save_rfid_data_to_nvs(void);
 void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data);

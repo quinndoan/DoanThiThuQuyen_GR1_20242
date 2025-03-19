@@ -25,13 +25,12 @@ char g_uid[20];
 
 void app_main()
 {
-    // Khởi tạo NVS
+   initialize_uart();
     ESP_ERROR_CHECK(init_nvs());
     void initialize_uart();
     // Đọc dữ liệu đã lưu (nếu có)
     read_rfid_data_from_nvs();
-    
-    // Khởi tạo RC522
+    // Start RC522
     rc522_spi_create(&driver_config, &driver);
     rc522_driver_install(driver);
 
@@ -42,11 +41,9 @@ void app_main()
     rc522_create(&scanner_config, &scanner);
     rc522_register_events(scanner, RC522_EVENT_PICC_STATE_CHANGED, on_picc_state_changed, NULL);
     rc522_start(scanner);
-    
-    
-    // Tạo task đọc liên tục thẻ RFID
-    xTaskCreate(continuous_read_task, "rfid_read_task", 4096, NULL, 5, NULL);
-    
-    // Tạo task UART
-    xTaskCreate(rx_task, "uart_rx_task", 4096, NULL, 5, NULL);
+
+    // Create UART receive task to handle incoming commands
+    xTaskCreate(rx_task, "uart_rx_task", 4096, NULL, configMAX_PRIORITIES-1, NULL);
 }
+
+

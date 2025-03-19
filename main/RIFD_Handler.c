@@ -1,14 +1,20 @@
 #include <esp_log.h>
+#include <esp_err.h>
 #include "RIFD_Handler.h"
-#include "picc/rc522_mifare.h"
+#include <esp_check.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "Global.h"
-#include "string.h"
-static const char *TAG = "rc522_reading_card";
 
+static const char *TAG = "rc522_reading_card";
+//#define RC522_MIFARE_BLOCK_SIZE 16
+extern char g_uid[20];
+extern char g_atqa[10];
+extern char g_sak[10];
+
+// Định nghĩa các biến toàn cục
 rc522_driver_handle_t driver;
 rc522_handle_t scanner;
+rc522_picc_t *picc;
 rc522_spi_config_t driver_config = {
     .host_id = SPI3_HOST,
     .bus_config = &(spi_bus_config_t){
@@ -136,6 +142,108 @@ esp_err_t init_nvs(void)
     return ret;
 }
 
+
+void dump_block(uint8_t buffer[RC522_MIFARE_BLOCK_SIZE])
+{
+    for (uint8_t i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
+        esp_log_write(ESP_LOG_INFO, TAG, "%02" RC522_X " ", buffer[i]);
+    }
+
+    esp_log_write(ESP_LOG_INFO, TAG, "\n");
+}
+
+esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
+{
+    const char *data_to_write = data;
+    const uint8_t block_address = 4;
+    rc522_mifare_key_t key = {
+        .value = { RC522_MIFARE_KEY_VALUE_DEFAULT },
+    };
+
+    if (strlen(data_to_write) > 14) {
+        ESP_LOGW(TAG, "Make sure data length is no more than 14 characters");
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Add delay before authentication
+    vTaskDelay(pdMS_TO_TICKS(10));
+    
+    esp_err_t ret = rc522_mifare_auth(scanner, picc, block_address, &key);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Authentication failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Add delay after authentication
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    uint8_t read_buffer[RC522_MIFARE_BLOCK_SIZE];
+    uint8_t write_buffer[RC522_MIFARE_BLOCK_SIZE];
+
+    // Read current data
+    ESP_LOGI(TAG, "Reading data from block %d", block_address);
+    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Read failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
+    ESP_LOGI(TAG, "Current data:");
+    dump_block(read_buffer);
+
+    // Add delay before write
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // Prepare and write data
+    memset(write_buffer, 0, RC522_MIFARE_BLOCK_SIZE);
+    strncpy((char *)write_buffer, data_to_write, RC522_MIFARE_BLOCK_SIZE);
+    
+    ESP_LOGI(TAG, "Writing data to block %d:", block_address);
+    dump_block(write_buffer);
+    
+    ret = rc522_mifare_write(scanner, picc, block_address, write_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Write failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Add delay before verification
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // Verify written data
+    ESP_LOGI(TAG, "Write done. Verifying...");
+    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Verification read failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
+    ESP_LOGI(TAG, "New data in block %d:", block_address);
+    dump_block(read_buffer);
+
+    // Validate
+    bool rw_missmatch = false;
+    for (uint8_t i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
+        if (write_buffer[i] != read_buffer[i]) {
+            rw_missmatch = true;
+            ESP_LOGE(TAG, "Mismatch at byte %d (w:%02X, r:%02X)", i, write_buffer[i], read_buffer[i]);
+            break;
+        }
+    }
+
+    if (!rw_missmatch) {
+        ESP_LOGI(TAG, "Write verified successfully");
+        // Update global variables
+        bzero(g_uid, sizeof(g_uid));
+        strncpy(g_uid, data, sizeof(g_uid) - 1);
+        g_uid[sizeof(g_uid) - 1] = '\0';
+        save_rfid_data_to_nvs();
+        return ESP_OK;
+    }
+
+    return ESP_FAIL;
+}
+
 // Hàm lưu dữ liệu RFID vào NVS
 void save_rfid_data_to_nvs(void)
 {
@@ -199,7 +307,7 @@ void read_rfid_data_from_nvs(void)
     }
 
     // Đọc ATQA
-    required_size = 20;
+    required_size = 10;
     err = nvs_get_str(nvs_handle, NVS_KEY_ATQA, g_atqa, &required_size);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "No ATQA data found");
@@ -208,7 +316,7 @@ void read_rfid_data_from_nvs(void)
     }
 
     // Đọc SAK
-    required_size = 20;
+    required_size = 10;
     err = nvs_get_str(nvs_handle, NVS_KEY_SAK, g_sak, &required_size);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "No SAK data found");
@@ -222,7 +330,7 @@ void read_rfid_data_from_nvs(void)
 void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data)
 {
     rc522_picc_state_changed_event_t *event = (rc522_picc_state_changed_event_t *)data;
-    rc522_picc_t *picc = event->picc;
+    picc = event->picc;
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
         rc522_picc_print(picc);
@@ -256,3 +364,4 @@ void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, v
         active_picc = NULL;
     }
 }
+
