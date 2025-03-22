@@ -61,85 +61,75 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
     };
 
     if (strlen(data_to_write) > 14) {
-        ESP_LOGW(TAG, "Make sure data length is no more than 14 characters");
+        ESP_LOGW(TAG, "Make sure that data length is no more than 14 characters");
+
         return ESP_ERR_INVALID_ARG;
     }
 
-    // Add delay before operations
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    // Authenticate
-    esp_err_t ret = rc522_mifare_auth(scanner, picc, block_address, &key);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Authentication failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    ESP_RETURN_ON_ERROR(rc522_mifare_auth(scanner, picc, block_address, &key), TAG, "auth fail");
 
     uint8_t read_buffer[RC522_MIFARE_BLOCK_SIZE];
     uint8_t write_buffer[RC522_MIFARE_BLOCK_SIZE];
 
-    // Read current data
-    ESP_LOGI(TAG, "Reading data from block %d", block_address);
-    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Read failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    
+    // Read
+    ESP_LOGI(TAG, "Reading data from the block %d", block_address);
+    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
     ESP_LOGI(TAG, "Current data:");
     dump_block(read_buffer);
+    // ~Read
 
-    // Add delay before write
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    // Prepare and write data
-    memset(write_buffer, 0, RC522_MIFARE_BLOCK_SIZE);
+    // Write
     strncpy((char *)write_buffer, data_to_write, RC522_MIFARE_BLOCK_SIZE);
-    
-    ESP_LOGI(TAG, "Writing data to block %d:", block_address);
+
+    // random last two bytes for different data on each call
+    int r = rand();
+    write_buffer[RC522_MIFARE_BLOCK_SIZE - 2] = ((r >> 8) & 0xFF);
+    write_buffer[RC522_MIFARE_BLOCK_SIZE - 1] = ((r >> 0) & 0xFF);
+
+    ESP_LOGI(TAG, "Writing data (%s) to the block %d:", data_to_write, block_address);
     dump_block(write_buffer);
-    
-    ret = rc522_mifare_write(scanner, picc, block_address, write_buffer);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Write failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    ESP_RETURN_ON_ERROR(rc522_mifare_write(scanner, picc, block_address, write_buffer), TAG, "write fail");
+    // ~Write
 
-    // Add delay before verification
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    // Verify written data
+    // Read again
     ESP_LOGI(TAG, "Write done. Verifying...");
-    ret = rc522_mifare_read(scanner, picc, block_address, read_buffer);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Verification read failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    
-    ESP_LOGI(TAG, "New data in block %d:", block_address);
+    ESP_RETURN_ON_ERROR(rc522_mifare_read(scanner, picc, block_address, read_buffer), TAG, "read fail");
+    ESP_LOGI(TAG, "New data in the block %d:", block_address);
     dump_block(read_buffer);
+    // ~Read again
 
     // Validate
     bool rw_missmatch = false;
-    for (uint8_t i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
+    uint8_t i;
+    for (i = 0; i < RC522_MIFARE_BLOCK_SIZE; i++) {
         if (write_buffer[i] != read_buffer[i]) {
             rw_missmatch = true;
-            ESP_LOGE(TAG, "Mismatch at byte %d (w:%02X, r:%02X)", i, write_buffer[i], read_buffer[i]);
             break;
         }
     }
+    // ~Validate
 
+    // Feedback
     if (!rw_missmatch) {
-        ESP_LOGI(TAG, "Write verified successfully");
+        ESP_LOGI(TAG, "Verified.");
         // Update global variables
-        bzero(g_uid, sizeof(g_uid));
         strncpy(g_uid, data, sizeof(g_uid) - 1);
         g_uid[sizeof(g_uid) - 1] = '\0';
         save_rfid_data_to_nvs();
-        return ESP_OK;
     }
+    else {
+        ESP_LOGE(TAG,
+            "Write failed. RW missmatch on the byte %d (w:%02" RC522_X ", r:%02" RC522_X ")",
+            i,
+            write_buffer[i],
+            read_buffer[i]);
 
-    return ESP_FAIL;
+        dump_block(write_buffer);
+        dump_block(read_buffer);
+    }
+    // ~Feedback
+
+    return ESP_OK;
 }
 
 // Hàm lưu dữ liệu RFID vào NVS
