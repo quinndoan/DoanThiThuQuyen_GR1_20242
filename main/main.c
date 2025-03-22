@@ -27,7 +27,6 @@ void app_main()
 {
    initialize_uart();
     ESP_ERROR_CHECK(init_nvs());
-    void initialize_uart();
     // Đọc dữ liệu đã lưu (nếu có)
     read_rfid_data_from_nvs();
     // Start RC522

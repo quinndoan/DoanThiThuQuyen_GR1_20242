@@ -1,3 +1,5 @@
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "UARTHandler.h"
 #include "task_common.h"
 #include <driver/uart.h>

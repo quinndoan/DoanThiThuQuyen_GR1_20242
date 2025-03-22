@@ -65,17 +65,15 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
         return ESP_ERR_INVALID_ARG;
     }
 
-    // Add delay before authentication
-    vTaskDelay(pdMS_TO_TICKS(10));
-    
+    // Add delay before operations
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    // Authenticate
     esp_err_t ret = rc522_mifare_auth(scanner, picc, block_address, &key);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Authentication failed: %s", esp_err_to_name(ret));
         return ret;
     }
-
-    // Add delay after authentication
-    vTaskDelay(pdMS_TO_TICKS(10));
 
     uint8_t read_buffer[RC522_MIFARE_BLOCK_SIZE];
     uint8_t write_buffer[RC522_MIFARE_BLOCK_SIZE];
@@ -92,7 +90,7 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
     dump_block(read_buffer);
 
     // Add delay before write
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     // Prepare and write data
     memset(write_buffer, 0, RC522_MIFARE_BLOCK_SIZE);
@@ -108,7 +106,7 @@ esp_err_t read_write(rc522_handle_t scanner, rc522_picc_t *picc, char* data)
     }
 
     // Add delay before verification
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     // Verify written data
     ESP_LOGI(TAG, "Write done. Verifying...");
@@ -233,9 +231,7 @@ void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, v
     picc = event->picc;
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
-        rc522_picc_print(picc);
-        
-        // Lưu trữ thẻ đang active
+        ESP_LOGI(TAG, "Card detected - Type: %d", picc->type);
         active_picc = picc;
         
         // Lưu UID vào biến global
