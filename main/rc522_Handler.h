@@ -16,8 +16,8 @@
 
 #define RC522_SPI_BUS_GPIO_MISO    (19)
 #define RC522_SPI_BUS_GPIO_MOSI    (21)
-#define RC522_SPI_BUS_GPIO_SCLK    (22)
-#define RC522_SPI_SCANNER_GPIO_SDA (23)
+#define RC522_SPI_BUS_GPIO_SCLK    (26)
+#define RC522_SPI_SCANNER_GPIO_SDA (27)
 #define RC522_SCANNER_GPIO_RST     (-1) // soft-reset
 
 extern rc522_driver_handle_t driver;

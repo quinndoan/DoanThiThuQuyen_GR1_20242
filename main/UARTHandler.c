@@ -4,8 +4,9 @@
 #include "task_common.h"
 #include <driver/uart.h>
 #include <string.h>
-#include "RIFD_Handler.h"
-#define UART_PORT   1
+#include "rc522_Handler.h"
+#define UART_PORT_COMMAND   2
+#define UART_PORT_RDM6300   1
 #define RX_BUF_SIZE     1024
 #define TXD_PIN         5
 #define RXD_PIN         4
@@ -18,7 +19,27 @@ extern char g_sak[10];
 extern rc522_handle_t scanner;
 extern rc522_picc_t *picc;
 
-void initialize_uart() {
+
+#define RX_PIN 16   
+#define TX_PIN 17
+#define UART_PORT UART_NUM_1
+
+void init_uart_for_RFID_125KHz() {
+    uart_config_t uart_config = {
+        .baud_rate = 9600,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
+
+    uart_param_config(UART_PORT, &uart_config);
+    uart_set_pin(UART_PORT, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_PORT, 1024, 0, 0, NULL, 0);
+}
+
+
+void initialize_uart_command() {
     const uart_config_t uart_config = {
          .baud_rate = 115200,
          .data_bits = UART_DATA_8_BITS,
@@ -27,9 +48,9 @@ void initialize_uart() {
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
          .source_clk = UART_SCLK_DEFAULT,
      };
-     uart_driver_install(UART_PORT, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
-     uart_param_config(UART_PORT, &uart_config);
-     uart_set_pin(UART_PORT, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+     uart_driver_install(UART_PORT_COMMAND, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+     uart_param_config(UART_PORT_COMMAND, &uart_config);
+     uart_set_pin(UART_PORT_COMMAND, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
  }
 
   void tx_task(void *arg)
@@ -38,7 +59,7 @@ void initialize_uart() {
      const char* message = (const char*) arg;
  
          while (1){// Gửi thông điệp qua UART
-         uart_write_bytes(UART_PORT, message, strlen(message));
+         uart_write_bytes(UART_PORT_COMMAND, message, strlen(message));
          vTaskDelay(5000);
          
         }
@@ -53,54 +74,54 @@ void process_uart_command(const char* command) {
             esp_err_t result = read_write(scanner, picc, data);
             if (result == ESP_OK) {
                 const char* response = "Write successful\n";
-                uart_write_bytes(UART_PORT, response, strlen(response));
+                uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
             }
             else if (result == ESP_ERR_NOT_FOUND) {
                 const char* response = "No card detected\n";
-                uart_write_bytes(UART_PORT, response, strlen(response));
+                uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
             }
             else {
                 char response[50];
                 snprintf(response, sizeof(response), "Write failed: %s\n", esp_err_to_name(result));
-                uart_write_bytes(UART_PORT, response, strlen(response));
+                uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
             }
         } else {
             const char* response = "Missing data to write\n";
-            uart_write_bytes(UART_PORT, response, strlen(response));
+            uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
         }
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     }
     else if (strcmp(command, "who") == 0) {
         const char* response = "Quyen's device\n";
-        uart_write_bytes(UART_PORT, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     } else if (strcmp(command, "uid") == 0) {
         char response[30];
         snprintf(response, sizeof(response), "UID: %s\n", g_uid);
-        uart_write_bytes(UART_PORT, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     } else if (strcmp(command, "atqa") == 0) {
         char response[30];
         snprintf(response, sizeof(response), "ATQA: %s\n", g_atqa);
-        uart_write_bytes(UART_PORT, response, strlen(response));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
         uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
     } else if (strcmp(command, "sak") == 0) {
         char response[30];
         snprintf(response, sizeof(response), "SAK: %s\n", g_sak);
-        uart_write_bytes(UART_PORT, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     } else if (strcmp(command, "all")==0) {
         // send all information
         char response[100];
         snprintf(response, sizeof(response), "UID: %s\nATQA: %s\nSAK: %s\n", 
                 g_uid, g_atqa, g_sak);
-        uart_write_bytes(UART_PORT, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     }
     else {
         const char* response = "Unknown command\n";
-        uart_write_bytes(UART_PORT, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     }
 }
 
@@ -108,7 +129,7 @@ void rx_task(void *arg) {
     static const char *RX_TASK_TAG = "RX_TASK";
     uint8_t* data = (uint8_t*) malloc(RX_BUF_SIZE + 1);
     while (1) {
-        const int rxBytes = uart_read_bytes(UART_PORT, data, RX_BUF_SIZE, 500);
+        const int rxBytes = uart_read_bytes(UART_PORT_COMMAND, data, RX_BUF_SIZE, 500);
         
         if (rxBytes > 0) {
             data[rxBytes] = '\0';
@@ -117,4 +138,18 @@ void rx_task(void *arg) {
         }
     }
     free(data);
+}
+
+void RFID_125_Task(void *arg) {
+    printf("RDM6300 initialized. Waiting for tags...\n");
+    while (1) {
+       
+       char data2[15] = {0};
+        int len = uart_read_bytes(UART_PORT_RDM6300, data2, sizeof(data2) - 1, 100 / portTICK_PERIOD_MS);
+        if (len > 0) {
+            data2[len] = '\0';
+            printf("RDM6300 Tag detected: %s\n", data2);
+        }
+    }
+   
 }
