@@ -4,7 +4,7 @@ idf_component_register(SRCS "UARTHandler.c" "main.c" "rc522_Handler.c"
                              "nvs_flash"
                              "driver"
                              "esp_event"
-                             "components"
+                             "ssd1306"
                              )
 
 

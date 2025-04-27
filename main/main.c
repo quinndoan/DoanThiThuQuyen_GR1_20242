@@ -10,8 +10,8 @@
 #include "rc522_handler.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "ssd1306/ssd1306.h"
-#include "ssd1306/font8x8_basic.h"
+#include "ssd1306.h"
+#include "font8x8_basic.h"
 
 static const char *TAG = "main";
 
