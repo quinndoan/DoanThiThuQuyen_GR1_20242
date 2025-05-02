@@ -5,11 +5,12 @@
         "board/esp32-wrover-kit-3.3v.cfg"
     ],
     "idf.toolsPathWin": "c:\\espressif",
-    "idf.portWin": "COM17",
+    "idf.portWin": "COM6",
     "idf.flashType": "UART",
     "files.associations": {
         "*.embeddedhtml": "html",
         "rifd_handler.h": "c",
-        "rc522_picc.h": "c"
+        "rc522_picc.h": "c",
+        "ssd1306.h": "c"
     }
 }
