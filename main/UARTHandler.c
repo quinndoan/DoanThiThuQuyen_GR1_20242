@@ -1,24 +1,28 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include "freertos/queue.h"
 #include "UARTHandler.h"
 #include "task_common.h"
 #include <driver/uart.h>
 #include <string.h>
 #include "rc522_Handler.h"
-#define UART_PORT_COMMAND   2
-#define UART_PORT_RDM6300   1
-#define RX_BUF_SIZE     1024
-#define TXD_PIN         5
-#define RXD_PIN         4
+#include "ssd1306.h"
+#include "font8x8_basic.h"
+#include "Global.h"
+#include "MQTTHandler.h"
 
+extern bool is_mqtt_connected;
 static const char* TAG = "uartTask";
 extern char g_uid[20];
 extern char g_atqa[10];
 extern char g_sak[10];
+extern esp_mqtt_client_handle_t mqtt_client;
 //extern rc522_picc_t *active_picc;
 extern rc522_handle_t scanner;
 extern rc522_picc_t *picc;
+extern SSD1306_t dev;
 
+// extern QueueHandle_t uart_queue_rfid_125KHz;
 
 #define RX_PIN 16   
 #define TX_PIN 17
@@ -149,7 +153,14 @@ void RFID_125_Task(void *arg) {
         if (len > 0) {
             data2[len] = '\0';
             printf("RDM6300 Tag detected: %s\n", data2);
+            ssd1306_clear_screen(&dev, false);
+            ssd1306_contrast(&dev, 0xff);
+            ssd1306_display_text(&dev, 0, data2, 15, false);
+            if (is_mqtt_connected) {
+                esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC, data2, 0, 1, 0);
+            }
+            
         }
+      
     }
-   
 }

@@ -14,8 +14,8 @@
 #include "esp_mac.h"
 #include "picc/rc522_mifare.h"
 
-#define RC522_SPI_BUS_GPIO_MISO    (19)
-#define RC522_SPI_BUS_GPIO_MOSI    (21)
+#define RC522_SPI_BUS_GPIO_MISO    (18)
+#define RC522_SPI_BUS_GPIO_MOSI    (19)
 #define RC522_SPI_BUS_GPIO_SCLK    (26)
 #define RC522_SPI_SCANNER_GPIO_SDA (27)
 #define RC522_SCANNER_GPIO_RST     (-1) // soft-reset

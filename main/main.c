@@ -12,6 +12,8 @@
 #include "freertos/task.h"
 #include "ssd1306.h"
 #include "font8x8_basic.h"
+#include "wifiHandler.h"
+#include "MQTTHandler.h"
 
 static const char *TAG = "main";
 
@@ -22,6 +24,11 @@ char g_atqa[10];
 char g_sak[10];
 char g_uid[20];
 
+SSD1306_t dev;
+int center, top, bottom;
+char lineChar[20];
+bool is_wifi_connected = false;
+bool is_mqtt_connected = false;
 #define tag "SSD1306"
 
 void app_main()
@@ -30,10 +37,7 @@ void app_main()
     
    initialize_uart_command();
    init_uart_for_RFID_125KHz();
-   SSD1306_t dev;
-	int center, top, bottom;
-	char lineChar[20];
-
+    
 #if CONFIG_I2C_INTERFACE
 	ESP_LOGI(tag, "INTERFACE is i2c");
 	ESP_LOGI(tag, "CONFIG_SDA_GPIO=%d",CONFIG_SDA_GPIO);
@@ -42,7 +46,23 @@ void app_main()
 	i2c_master_init(&dev, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
 #endif // CONFIG_I2C_INTERFACE
 
+#if CONFIG_SSD1306_128x64
+	ESP_LOGI(tag, "Panel is 128x64");
+	ssd1306_init(&dev, 128, 64);
+#endif // CONFIG_SSD1306_128x64
+
+    ssd1306_clear_screen(&dev, false);
+	ssd1306_contrast(&dev, 0xff);
+	ssd1306_display_text_x3(&dev, 0, "Hello", 5, false);
+	vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+
     ESP_ERROR_CHECK(init_nvs());
+
+    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+    wifi_init_sta();
+    mqtt_app_start();
+
     // Đọc dữ liệu đã lưu (nếu có)
     read_rfid_data_from_nvs();
     // Start RC522
@@ -60,7 +80,8 @@ void app_main()
     // Create UART receive task to handle incoming commands
     xTaskCreate(rx_task, "uart_rx_task", 4096, NULL, configMAX_PRIORITIES-1, NULL);
     vTaskDelay(50);
-    xTaskCreate(RFID_125_Task, "RFID_125_Task", 4096, NULL, configMAX_PRIORITIES-1, NULL);
+        ESP_LOGI(TAG, "RDM6300 initialized. Waiting for tags...");
+        xTaskCreate(RFID_125_Task, "uart_event_task", 2048, NULL, 12, NULL);
    
 }
 

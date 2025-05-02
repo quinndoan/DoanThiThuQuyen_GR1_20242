@@ -1,5 +1,12 @@
 #ifndef UART_TASK_H
 #define UART_TASK_H
+
+#define UART_PORT_COMMAND   2
+#define UART_PORT_RDM6300   1
+#define RX_BUF_SIZE     1024
+#define TXD_PIN         5
+#define RXD_PIN         4
+
 void init_uart_for_RFID_125KHz();
 void initialize_uart_command();
 //int sendData();     // data length
