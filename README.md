@@ -20,6 +20,7 @@ In addition to RFID capabilities, the firmware supports MQTT communication, allo
 
 ## Folder Structure
 
+.
 ├── main/                  # Application source code
 │   ├── rfid_125_uart.c    # 125 kHz reader logic
 │   ├── rfid_13_spi.c      # 13.56 MHz reader/writer logic
@@ -27,5 +28,6 @@ In addition to RFID capabilities, the firmware supports MQTT communication, allo
 ├── components/            # Optional component libraries
 ├── sdkconfig              # ESP-IDF configuration
 ├── README.md              # This file
+
 
 ## Configuration
