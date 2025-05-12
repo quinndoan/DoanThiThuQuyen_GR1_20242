@@ -20,14 +20,25 @@ In addition to RFID capabilities, the firmware supports MQTT communication, allo
 
 ## Folder Structure
 
-.
-├── main/                  # Application source code
-│   ├── rfid_125_uart.c    # 125 kHz reader logic
-│   ├── rfid_13_spi.c      # 13.56 MHz reader/writer logic
-│   └── mqtt.c             # MQTT pub/sub handling
-├── components/            # Optional component libraries
-├── sdkconfig              # ESP-IDF configuration
-├── README.md              # This file
-
+```
+main/
+├── components/
+├── esp-idf-rc522-main/
+│ ├── CMakeLists.txt
+│ ├── Global.h
+│ ├── main.c
+│ ├── MQTTHandler.c
+│ ├── MQTTHandler.h
+│ ├── rc522_Handler.c
+│ ├── rc522_Handler.h
+│ ├── task_common.h
+│ ├── UARTHandler.c
+│ ├── UARTHandler.h
+│ ├── wifiHandler.c
+│ └── wifiHandler.h
+├── CMakeLists.txt
+├── README.md
+└── sdkconfig
+```
 
 ## Configuration
