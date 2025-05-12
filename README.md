@@ -1,35 +1,31 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 
-# _Sample project_
+## Overview and Features
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+This project is a firmware application for the ESP32 microcontroller that supports reading RFID tags of two different frequency types:
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+    - 125 kHz RFID (e.g., EM4100) — Read-only, communicates via UART
+    - 13.56 MHz RFID (e.g., MIFARE) — Read and write, communicates via SPI
 
+In addition to RFID capabilities, the firmware supports MQTT communication, allowing the ESP32 to both publish and subscribe to messages on a specified topic.
 
+## Requirements
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
+    - ESP32 Development Board
+    - 125 kHz RFID reader (UART)
+    - 13.56 MHz RFID reader (SPI, e.g., RC522)
+    - MQTT Broker (e.g., Mosquitto)
+    - Vscode and ESP-IDF toolchain
 
-## Example folder contents
+## Folder Structure
 
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
+├── main/                  # Application source code
+│   ├── rfid_125_uart.c    # 125 kHz reader logic
+│   ├── rfid_13_spi.c      # 13.56 MHz reader/writer logic
+│   └── mqtt.c             # MQTT pub/sub handling
+├── components/            # Optional component libraries
+├── sdkconfig              # ESP-IDF configuration
+├── README.md              # This file
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+## Configuration
