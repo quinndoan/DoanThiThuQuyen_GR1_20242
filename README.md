@@ -33,11 +33,11 @@ This project is a firmware application for the ESP32 family of microcontrollers.
 ```
 
 ├── components/
-│ └── ssd1306/ # OLED driver
-├── esp-idf-rc522-main/ # RC522 13.56 MHz RFID driver
-├── main/ # Main application source
-├── CMakeLists.txt # Top-level CMake config
-├── sdkconfig # ESP-IDF project config
+│ └── ssd1306/                  # OLED driver
+├── esp-idf-rc522-main/         # RC522 13.56 MHz RFID driver
+├── main/                       # Main application source
+├── CMakeLists.txt              # Top-level CMake config
+├── sdkconfig                   # ESP-IDF project config
 └── README.md
 ```
 ## Build and Configuration Notes
