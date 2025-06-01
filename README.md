@@ -46,8 +46,6 @@ This project uses CMake via the ESP-IDF build system. Keep the following in mind
 
 - All `.c` source files in `main/` must be declared in `main/CMakeLists.txt`
 - When adding third-party drivers or large modules, place them in a separate folder and register it via `EXTRA_COMPONENT_DIRS` in the top-level `CMakeLists.txt`
-- Each component (e.g., `ssd1306`, `esp-idf-rc522-main`) must have its own `CMakeLists.txt` that defines its sources and include paths
-
-Refer to existing examples in:
-- `components/ssd1306/CMakeLists.txt`
-- `esp-idf-rc522-main/CMakeLists.txt`
+- Each component (e.g., `ssd1306`, `esp-idf-rc522-main`) must have its own `CMakeLists.txt` that defines its sources and include paths. Refer to existing examples in:
+    - `components/ssd1306/CMakeLists.txt`
+    - `esp-idf-rc522-main/CMakeLists.txt`
