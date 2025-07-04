@@ -3,9 +3,14 @@
 
 #define UART_PORT_COMMAND   2
 #define UART_PORT_RDM6300   1
+
 #define RX_BUF_SIZE     1024
-#define TXD_PIN         5
-#define RXD_PIN         4
+
+#define TXD_PIN_COMMAND         5
+#define RXD_PIN_COMMAND         4
+
+#define RX_PIN_RDM6300 16   
+#define TX_PIN_RDM6300 17
 
 void init_uart_for_RFID_125KHz();
 void initialize_uart_command();

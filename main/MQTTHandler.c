@@ -17,9 +17,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
 
         case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG, "MQTT data received");
-            printf("Topic: %.*s\n", event->topic_len, event->topic);
-            printf("Data : %.*s\n", event->data_len, event->data);
+            ESP_LOGI(TAG, "MQTT data received from broker");
+            ESP_LOGI(TAG, "Topic: %.*s | Data: %.*s | TopicLen: %d | DataLen: %d",
+                event->topic_len, event->topic,
+                event->data_len, event->data,
+                event->topic_len, event->data_len);
             break;
 
         case MQTT_EVENT_DISCONNECTED:

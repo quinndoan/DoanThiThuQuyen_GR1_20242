@@ -24,10 +24,6 @@ extern SSD1306_t dev;
 
 // extern QueueHandle_t uart_queue_rfid_125KHz;
 
-#define RX_PIN 16   
-#define TX_PIN 17
-#define UART_PORT UART_NUM_1
-
 void init_uart_for_RFID_125KHz() {
     uart_config_t uart_config = {
         .baud_rate = 9600,
@@ -37,9 +33,9 @@ void init_uart_for_RFID_125KHz() {
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
 
-    uart_param_config(UART_PORT, &uart_config);
-    uart_set_pin(UART_PORT, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(UART_PORT, 1024, 0, 0, NULL, 0);
+    uart_param_config(UART_PORT_RDM6300, &uart_config);
+    uart_set_pin(UART_PORT_RDM6300, TX_PIN_RDM6300, RX_PIN_RDM6300, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_PORT_RDM6300, 1024, 0, 0, NULL, 0);
 }
 
 
@@ -54,7 +50,7 @@ void initialize_uart_command() {
      };
      uart_driver_install(UART_PORT_COMMAND, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
      uart_param_config(UART_PORT_COMMAND, &uart_config);
-     uart_set_pin(UART_PORT_COMMAND, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+     uart_set_pin(UART_PORT_COMMAND, TXD_PIN_COMMAND, RXD_PIN_COMMAND, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
  }
 
   void tx_task(void *arg)
@@ -108,7 +104,7 @@ void process_uart_command(const char* command) {
         char response[30];
         snprintf(response, sizeof(response), "ATQA: %s\n", g_atqa);
         uart_write_bytes(UART_PORT_COMMAND, response, strlen(response));
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+        uart_wait_tx_done(UART_PORT_COMMAND, pdMS_TO_TICKS(100));
     } else if (strcmp(command, "sak") == 0) {
         char response[30];
         snprintf(response, sizeof(response), "SAK: %s\n", g_sak);

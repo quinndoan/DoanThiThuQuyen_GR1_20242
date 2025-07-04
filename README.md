@@ -29,6 +29,21 @@ This project is a firmware application for the ESP32 family of microcontrollers.
 - MQTT Broker (e.g., Mosquitto, HiveMQ)  
 - ESP-IDF and VSCode  
 
+## Schematic
+|ESP32|Peripheral|
+|--|--|
+||Nút bấm điều khiển trên board|
+|D4|UART_Rx|
+|D5|UART_Tx|
+|D16|RDM6300_Tx|
+|D17|RDM6300_Rx|
+|D18|RC522_MISO|
+|D19|RC522_MOSI|
+|D26|RC522_SCK|
+|D27|RC522_SDA|
+|D22|I2C_SCL|
+|D21|I2C_SDA|
+
 ## Project Structure
 ```
 
@@ -49,3 +64,5 @@ This project uses CMake via the ESP-IDF build system. Keep the following in mind
 - Each component (e.g., `ssd1306`, `esp-idf-rc522-main`) must have its own `CMakeLists.txt` that defines its sources and include paths. Refer to existing examples in:
     - `components/ssd1306/CMakeLists.txt`
     - `esp-idf-rc522-main/CMakeLists.txt`
+
+## Result
