@@ -28,8 +28,8 @@ This project is a firmware application for the ESP32 family of microcontrollers.
 ## Schematic
 |ESP32|Peripheral|
 |--|--|
-|D4|UART_Rx|
-|D5|UART_Tx|
+|D5|UART_Rx|
+|D4|UART_Tx|
 |D16|RDM6300_Tx|
 |D17|RDM6300_Rx|
 |D18|RC522_MISO|
