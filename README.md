@@ -104,7 +104,7 @@ This section demonstrates the results of running the project with its core funct
 ![Reading Card Info Using RC522](https://github.com/quinndoan/DoanThiThuQuyen_GR1_20242/blob/main/image/rc522_readingfromcard.png)
 
 - Read and Write to Device Using UART
-![Read and Write to Device Using UART](https://github.com/quinndoan/DoanThiThuQuyen_GR1_20242/blob/main/image/uart.png)
+![Read and Write to Device Using UART](https://github.com/quinndoan/DoanThiThuQuyen_GR1_20242/blob/main/image/uart1.png)
 
 - Reading Card Info Using RDM6300 and Connect to MQTT
 ![Reading Card Info Using RDM6300 and Connect to MQTT](https://github.com/quinndoan/DoanThiThuQuyen_GR1_20242/blob/main/image/rdm6300_mqtt.png)
