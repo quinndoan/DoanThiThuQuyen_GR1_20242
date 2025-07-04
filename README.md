@@ -100,7 +100,7 @@ This project uses CMake via the ESP-IDF build system. Keep the following in mind
 ## Result
 This section demonstrates the results of running the project with its core functionalities.
 
-![Reading Card Info Using RC522](image\rc522_readingfromcard.png)
+![Reading Card Info Using RC522](https://github.com/quinndoan/DoanThiThuQuyen_GR1_20242/blob/main/image/rc522_readingfromcard.png)
 
 ![Read and Write to Device Using UART](image\rc522_uart.png)
 
